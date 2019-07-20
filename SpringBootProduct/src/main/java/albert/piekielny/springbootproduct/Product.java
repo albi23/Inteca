@@ -1,10 +1,11 @@
 package albert.piekielny.springbootproduct;
 
-import javax.persistence.Entity;
-import javax.persistence.PrimaryKeyJoinColumn;
-import javax.persistence.Table;
-import javax.persistence.Id;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Entity
 @Table
@@ -18,6 +19,9 @@ public class Product {
     private int value;
     @NotNull
     private String productName;
+
+    @Transient
+    private List<Product> products;
 
     public Product() {
     }
@@ -50,6 +54,14 @@ public class Product {
 
     public void setProductName(String productName) {
         this.productName = productName;
+    }
+
+    public List<Product> getProducts() {
+        return products;
+    }
+
+    public void setProducts(List<Product> products) {
+        this.products = products;
     }
 
     @Override

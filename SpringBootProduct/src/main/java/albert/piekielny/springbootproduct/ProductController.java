@@ -1,10 +1,15 @@
 package albert.piekielny.springbootproduct;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.apache.commons.io.IOUtils;
 
+import javax.servlet.http.HttpServletRequest;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping(path = "/")
@@ -19,21 +24,38 @@ public class ProductController {
 
     @CrossOrigin
     @RequestMapping(
-            method = RequestMethod.GET,
-            path = "/Product",
+            method = RequestMethod.POST,
+            path = "/Products",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public @ResponseBody
-    Iterable<Product> getProducts(@RequestParam ArrayList<Integer> creditsId) {
-//        ArrayList<Product> productsInfo = new ArrayList<>();
-//         productsInfo.add(productRepository.findAllById(creditsId));
-        creditsId.forEach(creditId -> {System.out.println(creditId);});
-         return productRepository.findAllById(creditsId);
+    List<Product> getProducts(HttpServletRequest request) {
+
+        List<Product> productsInfo = new ArrayList<>();
+        try {
+            List<String> creditsIdObject = IOUtils.readLines(request.getInputStream(), "UTF-8");
+            String result = creditsIdObject.get(0).substring(1, creditsIdObject.get(0).length() - 1);
+            String[] idCredits = result.split(",");
+            for (String id: idCredits) {
+               this.productRepository.findById((Integer.parseInt(id))).ifPresent(productsInfo::add);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return productsInfo;
     }
 
-
     @PostMapping(path = "/Product")
-    public @ResponseBody Product createProduct( Product product) {
+    public @ResponseBody
+    Product createProduct(HttpServletRequest request) {
+
+        ObjectMapper mapper = new ObjectMapper();
+        Product product = null;
+        try {
+            product = mapper.readValue(request.getInputStream(), Product.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return productRepository.save(product);
     }
 }

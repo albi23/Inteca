@@ -16,62 +16,92 @@ public class CreditController {
     private CreditRepository creditRepository;
 
     @Autowired
-    public void setCreditRepository(CreditRepository creditRepository){this.creditRepository = creditRepository;}
+    public void setCreditRepository(CreditRepository creditRepository) {
+        this.creditRepository = creditRepository;
+    }
 
 
     @GetMapping(path = "/Credit")
-    public @ResponseBody int createCredit(@RequestParam String nameOfCredit,
-                                             @RequestParam String clientName,
-                                             @RequestParam String clientSurname,
-                                             @RequestParam String clientPesel,
-                                             @RequestParam String productName,
-                                             @RequestParam int productValue){
+    public @ResponseBody
+    int createCredit(@RequestParam String nameOfCredit,
+                     @RequestParam String clientName,
+                     @RequestParam String clientSurname,
+                     @RequestParam String clientPesel,
+                     @RequestParam String productName,
+                     @RequestParam int productValue) {
 
         Credit credit = new Credit(nameOfCredit);
-        int currentAmountsOFCredits = (int)creditRepository.count()+1;
-        RestTemplate restTemplate = new RestTemplate();
-        HttpEntity<Product> request = new HttpEntity<>(new Product(currentAmountsOFCredits,productValue,productName));
+        int currentAmountsOFCredits = (int) creditRepository.count() + 1;
 
-
-         restTemplate.exchange("http://localhost:8081/Product",
-                HttpMethod.POST,
-                request,
-                Product.class);
-
-        HttpEntity<Customer> customerHttpEntity = new HttpEntity<>(new Customer(currentAmountsOFCredits,clientName,clientSurname,clientPesel));
-        restTemplate.exchange("http://localhost:8082/Customer",
-                HttpMethod.POST,
-                customerHttpEntity,
-                Customer.class);
-
+        createProduct(currentAmountsOFCredits, productValue, productName);
+        createCustomer(currentAmountsOFCredits, clientName, clientSurname, clientPesel);
 
         creditRepository.save(credit);
         return currentAmountsOFCredits; // numer nadanego credytu
     }
 
-    @GetMapping(path="/Credits")
-    public @ResponseBody Iterable<Credit> getAllCredits() {
+    @GetMapping(path = "/Credits")
+    public @ResponseBody
+    Iterable<Credit> getAllCredits() {
 
 
         Iterable<Credit> creditsInfo = creditRepository.findAll();
         ArrayList<Integer> creditsId = new ArrayList<>();
         creditsInfo.forEach(credit -> creditsId.add(credit.getId()));
 
-        RestTemplate restTemplate = new RestTemplate();
+        Product[] productInfo = getProducts(creditsId);
+        Customer[] customerInfo = getCustomers(creditsId);
 
+        for (Customer c: customerInfo) {
+            System.out.println(c);
+        }
+
+        return creditsInfo;
+    }
+
+    private Customer[] getCustomers(ArrayList<Integer> creditsId){
+
+        RestTemplate restTemplate = new RestTemplate();
         HttpEntity<ArrayList<Integer>> request = new HttpEntity<>(creditsId);
-        ResponseEntity<Product[]> productInfo = restTemplate.exchange("http://localhost:8081/Product",
-                HttpMethod.GET,
+
+        ResponseEntity<Customer[]> customers = restTemplate.exchange("http://localhost:8082/Customers",
+                HttpMethod.POST,
+                request,
+                Customer[].class);
+
+        return customers.getBody();
+    }
+
+    private Product[] getProducts(ArrayList<Integer> creditsId){
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpEntity<ArrayList<Integer>> request = new HttpEntity<>(creditsId);
+
+        ResponseEntity<Product[]> productInfo = restTemplate.exchange("http://localhost:8081/Products",
+                HttpMethod.POST,
                 request,
                 Product[].class);
 
-        Product[] products = productInfo.getBody();
-        assert products != null;
-        for (Product p: products) {
-            System.out.println(p);
-        }
-        return creditsInfo;
+        return productInfo.getBody();
+    }
 
+    private void createProduct(int currentAmountsOFCredits, int productValue, String productName) {
+        HttpEntity<Product> request = new HttpEntity<>(new Product(currentAmountsOFCredits, productValue, productName));
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.exchange("http://localhost:8081/Product",
+                HttpMethod.POST,
+                request,
+                Product.class);
+    }
+
+    private void createCustomer(int currentAmountsOFCredits, String clientName, String clientSurname, String clientPesel) {
+
+        HttpEntity<Customer> customerHttpEntity = new HttpEntity<>(new Customer(currentAmountsOFCredits, clientName, clientSurname, clientPesel));
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.exchange("http://localhost:8082/Customer",
+                HttpMethod.POST,
+                customerHttpEntity,
+                Customer.class);
     }
 
 }
