@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping(path = "/")
@@ -31,19 +32,18 @@ public class CreditController {
                      @RequestParam int productValue) {
 
         Credit credit = new Credit(nameOfCredit);
-        int currentAmountsOFCredits = (int) creditRepository.count() + 1;
-
-        createProduct(currentAmountsOFCredits, productValue, productName);
-        createCustomer(currentAmountsOFCredits, clientName, clientSurname, clientPesel);
-
         creditRepository.save(credit);
-        return currentAmountsOFCredits; // numer nadanego credytu
+
+        createProduct(credit.getId(), productValue, productName);
+        createCustomer(credit.getId(), clientName, clientSurname, clientPesel);
+
+        return credit.getId();
     }
 
+    @CrossOrigin()
     @GetMapping(path = "/Credits")
     public @ResponseBody
-    Iterable<Credit> getAllCredits() {
-
+    List<CreditResult> getAllCredits( ) {
 
         Iterable<Credit> creditsInfo = creditRepository.findAll();
         ArrayList<Integer> creditsId = new ArrayList<>();
@@ -52,14 +52,33 @@ public class CreditController {
         Product[] productInfo = getProducts(creditsId);
         Customer[] customerInfo = getCustomers(creditsId);
 
-        for (Customer c: customerInfo) {
-            System.out.println(c);
-        }
-
-        return creditsInfo;
+        return prepareResult(creditsInfo,productInfo,customerInfo);
     }
 
-    private Customer[] getCustomers(ArrayList<Integer> creditsId){
+
+    /***
+     * Numbers of rows credits, products and customers are the same,
+     * and data taken from DB are sorted, so we can easily construct response
+     * by iterate by all collections use only 1 loop
+     * @param credits
+     * @param products
+     * @param customers
+     */
+    private List<CreditResult> prepareResult(Iterable<Credit> credits, Product[] products, Customer[] customers) {
+
+        List<CreditResult> creditResults = new ArrayList<>();
+
+        for (Credit credit: credits) {
+            creditResults.add(new CreditResult(
+                    customers[credit.getId()-1].getFirstName(),customers[credit.getId()-1].getSurname(),customers[credit.getId()-1].getPesel(),
+                    products[credit.getId()-1].getProductName(), products[credit.getId()-1].getValue(),credit.getCreditName()
+            ));
+        }
+        return creditResults;
+    }
+
+
+    private Customer[] getCustomers(ArrayList<Integer> creditsId) {
 
         RestTemplate restTemplate = new RestTemplate();
         HttpEntity<ArrayList<Integer>> request = new HttpEntity<>(creditsId);
@@ -72,7 +91,7 @@ public class CreditController {
         return customers.getBody();
     }
 
-    private Product[] getProducts(ArrayList<Integer> creditsId){
+    private Product[] getProducts(ArrayList<Integer> creditsId) {
 
         RestTemplate restTemplate = new RestTemplate();
         HttpEntity<ArrayList<Integer>> request = new HttpEntity<>(creditsId);
