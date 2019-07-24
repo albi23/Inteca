@@ -4,11 +4,13 @@ import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { CreditsComponent } from './credits/credits.component';
 import { HttpClientModule} from '@angular/common/http';
+import { CreditsTableComponent } from './credits/credits-table/credits-table.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    CreditsComponent
+    CreditsComponent,
+    CreditsTableComponent
   ],
   imports: [
     BrowserModule,

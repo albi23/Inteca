@@ -22,6 +22,7 @@ public class CreditController {
     }
 
 
+    @CrossOrigin()
     @GetMapping(path = "/Credit")
     public @ResponseBody
     int createCredit(@RequestParam String nameOfCredit,

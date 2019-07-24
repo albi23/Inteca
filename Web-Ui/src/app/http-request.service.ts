@@ -1,5 +1,9 @@
-import { Injectable } from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
+import {Observable, throwError} from 'rxjs';
+import {Credits} from './credits.model';
+import {catchError, map} from 'rxjs/operators';
+
 
 @Injectable({
   providedIn: 'root'
@@ -7,22 +11,33 @@ import {HttpClient, HttpHeaders} from '@angular/common/http';
 export class HttpRequestService {
 
   private URL = 'http://localhost:8080';
+  private credits: Credits[];
 
   constructor(private http: HttpClient) {
   }
 
 
-  public getCredit(url: string) {
+  public requestForCredits(url: string) {
 
-    const header = new HttpHeaders({
-      'Access-Control-Allow-Origin': '*'
-    });
-    const options = {headers: header};
-
-    this.http.request('GET', this.URL + url , options).subscribe(
-      res => console.log(res), err => console.log(err));
+    const options: any = {json: true};
+    return this.http.request('GET', this.URL + url, options);
   }
 
+
+  public sendNewCredit(name: string, surname: string, pesel: string, productName: string, productValue: string, selectedCredit: string) {
+    return this.http.request('GET', this.URL + '/Credit?nameOfCredit=' + selectedCredit + '&clientName=' + name + '&clientSurname=' + surname + '&clientPesel=' + pesel + '&productName=' + productName + '&productValue=' + productValue);
+  }
+  errorHandler(error: HttpErrorResponse) {
+    if (error.error instanceof ErrorEvent) {
+      console.error('An error occurred:', error.error.message);
+    } else {
+      console.error(
+        `Backend returned code ${error.status}, ` +
+        `body was: ${error.error}`);
+    }
+    return throwError(
+      'Something bad happened; please try again later.');
+  }
 
 
   getBackendUrl(): string {
