@@ -50,10 +50,13 @@ public class CreditController {
         ArrayList<Integer> creditsId = new ArrayList<>();
         creditsInfo.forEach(credit -> creditsId.add(credit.getId()));
 
-        Product[] productInfo = getProducts(creditsId);
-        Customer[] customerInfo = getCustomers(creditsId);
+        if(creditsId.size() > 0) {
+            Product[] productInfo = getProducts(creditsId);
+            Customer[] customerInfo = getCustomers(creditsId);
 
-        return prepareResult(creditsInfo,productInfo,customerInfo);
+            return prepareResult(creditsInfo, productInfo, customerInfo);
+        }
+        return null;
     }
 
 
@@ -84,7 +87,7 @@ public class CreditController {
         RestTemplate restTemplate = new RestTemplate();
         HttpEntity<ArrayList<Integer>> request = new HttpEntity<>(creditsId);
 
-        ResponseEntity<Customer[]> customers = restTemplate.exchange("http://localhost:8082/Customers",
+        ResponseEntity<Customer[]> customers = restTemplate.exchange("http://customer:8082/Customers",
                 HttpMethod.POST,
                 request,
                 Customer[].class);
@@ -97,7 +100,7 @@ public class CreditController {
         RestTemplate restTemplate = new RestTemplate();
         HttpEntity<ArrayList<Integer>> request = new HttpEntity<>(creditsId);
 
-        ResponseEntity<Product[]> productInfo = restTemplate.exchange("http://localhost:8081/Products",
+        ResponseEntity<Product[]> productInfo = restTemplate.exchange("http://product:8081/Products",
                 HttpMethod.POST,
                 request,
                 Product[].class);
@@ -108,7 +111,7 @@ public class CreditController {
     private void createProduct(int currentAmountsOFCredits, int productValue, String productName) {
         HttpEntity<Product> request = new HttpEntity<>(new Product(currentAmountsOFCredits, productValue, productName));
         RestTemplate restTemplate = new RestTemplate();
-        restTemplate.exchange("http://localhost:8081/Product",
+        restTemplate.exchange("http://product:8081/Product",
                 HttpMethod.POST,
                 request,
                 Product.class);
@@ -118,7 +121,7 @@ public class CreditController {
 
         HttpEntity<Customer> customerHttpEntity = new HttpEntity<>(new Customer(currentAmountsOFCredits, clientName, clientSurname, clientPesel));
         RestTemplate restTemplate = new RestTemplate();
-        restTemplate.exchange("http://localhost:8082/Customer",
+        restTemplate.exchange("http://customer:8082/Customer",
                 HttpMethod.POST,
                 customerHttpEntity,
                 Customer.class);

@@ -10,7 +10,7 @@ import {catchError, map} from 'rxjs/operators';
 })
 export class HttpRequestService {
 
-  private URL = 'http://localhost:8080';
+  private URL = 'http://credit:8080';
   private credits: Credits[];
 
   constructor(private http: HttpClient) {

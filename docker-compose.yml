@@ -1,0 +1,46 @@
+version: "3"
+services:
+  Database:
+   container_name: 'mysql_db'
+   image: mysql:5.7
+   environment:
+    MYSQL_ROOT_PASSWORD: yours_secret_password
+    MYSQL_USER: root
+#    MYSQL_DATABASE: CustomerDB
+   ports:
+    - "3307:3306"
+  customer:
+   build: ./SpringBootCustomer
+   ports:
+    - "8082:8082"
+   depends_on:
+    - Database
+    - product
+  product:
+    build: ./SpringBootProduct
+    ports:
+      - "8081:8081"
+    depends_on:
+      - Database
+  credit:
+    build: ./SpringBootCredit
+    ports:
+      - "8080:8080"
+    depends_on:
+      - Database
+      - product
+      - customer
+  angular:
+    container_name: angularcontainer
+    build: ./Web-Ui
+    volumes:
+      - './Web-Ui:/usr/src/app'
+    ports:
+      - '4200:4200'
+    depends_on:
+      - Database
+      - product
+      - customer
+      - credit
+#    command: >
+#      bash -c "npm install && ng serve --host 0.0.0.0 --port 4200"
